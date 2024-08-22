@@ -162,8 +162,10 @@ cython_debug/
 # Preventing commits of IPA files, and IPA file containers and folders
 *.ipa
 *.zip
+*.png
 dumpedipas
 
 # Dear Tim... Why?
 .DS_Store
 
+uploaded.txt
