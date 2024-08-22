@@ -48,9 +48,9 @@ if os.path.exists("Payload"):
     exit()
 
 for file in filelist:
-    cpfile = file.replace(" ", "\ ").replace("(", "\(").replace(")", "\)")
+    cpfile = file
     #copy file to current directory
-    os.system(f'cp {cpfile} .')
+    os.system(f'cp "{cpfile}" .')
 
 
     newfile = file.split('/')[-1]
@@ -79,7 +79,10 @@ for file in filelist:
     iconfile = [f for f in os.listdir(f"Payload/{os.listdir('Payload')[0]}") if iconfile in f][0]
 
     # copy icon file to current directory
-    os.system(f'cp Payload/{os.listdir("Payload")[0]}/{iconfile}* .')
+    if (os.path.exists(f'Payload/{os.listdir("Payload")[0]}/{iconfile}')):
+        os.system(f'cp "Payload/{os.listdir("Payload")[0]}/{iconfile}" .')
+    else:
+        os.system(f'cp "Payload/{os.listdir("Payload")[0]}/{iconfile}*" .')
     os.system(f'rm -rf Payload')
 
     # Archive.org cannot read the icon pngs, so a specific thumbnail is needed
@@ -112,7 +115,7 @@ for file in filelist:
             f.write("https://archive.org/details/" + identifier + "\n")
             f.close()
 
-        os.system(f'mv {cpfile} uploaded/') # move file to "uploaded" folder
+        os.system(f'mv "{cpfile}" uploaded/') # move file to "uploaded" folder
         os.system(f'rm "{zipfile}"')
         os.system(f'rm "{iconfile}"')
         os.system(f'rm "{newfile}"')
