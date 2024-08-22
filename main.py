@@ -54,6 +54,9 @@ for file in filelist:
 
 
     newfile = file.split('/')[-1]
+    os.system(f'mv "{newfile}" "{newfile.replace(" ", "_")}"')
+    newfile = newfile.replace(" ", "_")
+    cpfile = cpfile.replace(" ", "_")
     name = newfile.replace('.ipa', '').replace('_', ' ').replace("decrypted","Decrypted")
     identifier = re.sub(r'[^a-zA-Z0-9-]', '', name.replace('.', '-').replace(' ', '-')).lower() + '-ipa'
 
@@ -98,7 +101,7 @@ for file in filelist:
 
     print("Now uploading " + colored(name, attrs=['bold']))
 
-    md = {'collection': collection, 'title': name, 'mediatype': 'software', 'description': ('Decrypted iOS iPA file for "' + name.replace("Decrypted", "") + '", with bundle ID ' + bundleid + "."), "subject": ("ipa;decrypted ipa;ios;" + bundleid)}
+    md = {'collection': collection, 'title': name, 'mediatype': 'software', 'description': ('Decrypted iOS iPA file for "' + name.replace(" Decrypted", "") + '", with bundle ID ' + bundleid + "."), "subject": ("ipa;decrypted ipa;ios;" + bundleid)}
     if (testmode):
         if (input("Test mode, enter to upload...") != ""):
             print("Cancelled.")
