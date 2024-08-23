@@ -75,21 +75,22 @@ for file in filelist:
     with open(f"Payload/{infoplist}", "r") as f:
         contents = f.read()
         soup = BeautifulSoup(contents, 'xml')
-        iconfile = soup.find("key", string="CFBundleIcons").find_next("array").find("string").text
         bundleid = soup.find("key", string="CFBundleIdentifier").find_next("string").text
+        iconfile = soup.find("key", string="CFBundleIcons").find_next("array").find("string").text
+
 
     # find icon file in full inside Payload/*/, since iconfile is only beginning of file name
     iconfile = [f for f in os.listdir(f"Payload/{os.listdir('Payload')[0]}") if iconfile in f][0]
 
     # copy icon file to current directory
     if (os.path.exists(f'Payload/{os.listdir("Payload")[0]}/{iconfile}')):
-        os.system(f'cp "Payload/{os.listdir("Payload")[0]}/{iconfile}" .')
+        os.system(f'cp "Payload/{os.listdir("Payload")[0]}/{iconfile}" . > /dev/null')
     else:
-        os.system(f'cp "Payload/{os.listdir("Payload")[0]}/{iconfile}*" .')
+        os.system(f'cp "Payload/{os.listdir("Payload")[0]}/{iconfile}*" . > /dev/null')
     os.system(f'rm -rf Payload')
 
     # Archive.org cannot read the icon pngs, so a specific thumbnail is needed
-    os.system(f'sips -s format jpeg "{iconfile}" --out _itemimage.jpg')
+    os.system(f'sips -s format jpeg "{iconfile}" --out _itemimage.jpg > /dev/null')
 
     # file will get sorted properly automatically by archive.org later, this is where all software goes
     collection = 'open_source_software'
@@ -118,11 +119,7 @@ for file in filelist:
             f.write("https://archive.org/details/" + identifier + "\n")
             f.close()
 
-        os.system(f'mv "{cpfile}" uploaded/') # move file to "uploaded" folder
-        os.system(f'rm "{zipfile}"')
-        os.system(f'rm "{iconfile}"')
-        os.system(f'rm "{newfile}"')
-        os.system('rm _itemimage.jpg')
+        os.system(f'mv "{file}" uploaded/ && rm "{zipfile}" && rm "{iconfile}" && rm "{newfile}" && rm _itemimage.jpg') # move file to "uploaded" folder
 
         if (file != filelist[-1]):
             print(colored(("Waiting " + str(waittime) + " seconds before uploading next file... \n"), "light_grey"))
