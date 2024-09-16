@@ -1,4 +1,4 @@
-from internetarchive import upload
+import internetarchive as ia
 from termcolor import colored, cprint
 import sys
 import os
@@ -20,12 +20,25 @@ print(colored("Github - https://github.com/9021007/IPAUploader", 'green'))
 print(colored("Made by 9021007 - https://links.9021007.xyz", 'green'))
 print("")
 
+if (sys.platform.startswith('win32')):
+    print(colored("Windows is not supported. Please use a Mac.", "red"))
+    exit()
+elif (sys.platform.startswith('linux')):
+    print(colored("Linux is not supported. You will need to modify this script to make it work. Good luck.", "yellow"))
+    if (input("Continue? (y/n) ") != "y"):
+        exit()
+
+# THANK YOU ego-lay-atman-bay FOR https://github.com/9021007/IPAUploader/issues/1
+if (not ia.get_session().access_key) or (not ia.get_session().secret_key):
+    print("Please enter your Internet Archive login credentials")
+    ia.configure()
+
 # Check to make sure files are passed in
 if (len(sys.argv) == 1):
     print("No files added as command arguments.")
     exit()
 else:
-    print(colored("Files passed in:", attrs=['bold', 'underline']))
+    print(colored("Files passed in: (" + str(len(sys.argv) - 1) + ")", attrs=['bold', 'underline']))
     for i in range(len(sys.argv)):
         if (i == 0):
             continue
@@ -79,57 +92,99 @@ for file in filelist:
             contents = f.read()
             soup = BeautifulSoup(contents, 'xml')
             bundleid = soup.find("key", string="CFBundleIdentifier").find_next("string").text
-            iconfile = soup.find("key", string="CFBundleIcons").find_next("array").find("string").text
-            appname = soup.find("key", string="CFBundleDusplayName").find_next("string").text
+            appname = soup.find("key", string="CFBundleDisplayName").find_next("string").text
             version = soup.find("key", string="CFBundleVersion").find_next("string").text
         except:
-            contents = readPlist(f"Payload/{infoplist}")
-            bundleid = contents["CFBundleIdentifier"]
-            appname = contents["CFBundleDisplayName"]
-            version = contents["CFBundleVersion"]
             try:
-                iconfile = contents["CFBundleIcons"]["CFBundlePrimaryIcon"]["CFBundleIconFiles"][0]
+                contents = f.read()
+                soup = BeautifulSoup(contents, 'xml')
+                appname = soup.find("key", string="CFBundleDisplayName").find_next("string").text
+                version = soup.find("key", string="CFBundleVersion").find_next("string").text
+                bundleid = soup.find("key", string="CFBundleIdentifier").find_next("string").text
             except:
                 try:
-                    iconfile = contents["Icon files"][0]
+                    contents = readPlist(f"Payload/{infoplist}")
+                    bundleid = contents["CFBundleIdentifier"]
+                    appname = contents["CFBundleDisplayName"]
+                    version = contents["CFBundleVersion"]
                 except:
-                    try:
-                        iconfile = contents["CFBundleIconFiles"][0]
-                    except:
-                        # check if Icon.png exists
-                        if (os.path.exists(f"Payload/{os.listdir('Payload')[0]}/Icon@2x.png")):
-                            iconfile = "Icon@2x.png"
-                        elif (os.path.exists(f"Payload/{os.listdir('Payload')[0]}/Icon.png")):
-                            iconfile = "Icon.png"
-                        else:
-                            raise Exception("Icon file not found in Info.plist")
-                            
-                
+                    contents = readPlist(f"Payload/{infoplist}")
+                    bundleid = contents["CFBundleIdentifier"]
+                    appname = contents["CFBundleName"]
+                    version = contents["CFBundleVersion"]
+                    
 
-    # if name contains more than 2 periods, replace name with appname
+
+
+
+    def isfile_casesensitive(path):
+        if not os.path.isfile(path): return False   # THANK YOU https://stackoverflow.com/questions/17277566/check-os-path-isfilefilename-with-case-sensitive-in-python
+        directory, filename = os.path.split(path)
+        if directory == '': directory = '.'
+        return filename in os.listdir(directory)
+           
+    # TODO this needs to be reordered in order of highest resolution to lowest
+    peckingorder = ["FreeIcon76x76~ipad.png","FreeIcon76x76@2x~ipad.png","FreeIcon72x72~ipad.png","FreeIcon72x72@2x~ipad.png","FreeIcon60x60@2x.png","FreeIcon57x57@2x.png","FreeIcon57x57.png","FreeIcon50x50~ipad.png","FreeIcon50x50@2x~ipad.png","FreeIcon40x40~ipad.png","FreeIcon40x40@2x~ipad.png","FreeIcon40x40@2x.png","FreeIcon29x29~ipad.png","FreeIcon29x29@2x~ipad.png","FreeIcon29x29@2x.png","FreeIcon29x29.png", "FreeIcon76x76", "FreeIcon72x72", "FreeIcon60x60", "FreeIcon57x57", "FreeIcon50x50", "FreeIcon40x40", "FreeIcon29x29", "AppIcon29x29@2x~ipad.png", "AppIcon29x29~ipad.png", "AppIcon40x40@2x~ipad.png", "AppIcon40x40~ipad.png", "AppIcon50x50@2x~ipad.png", "AppIcon50x50~ipad.png", "AppIcon57x57.png", "AppIcon57x57@2x.png", "AppIcon60x60@2x.png", "AppIcon72x72@2x~ipad.png", "AppIcon72x72~ipad.png", "AppIcon76x76@2x~ipad.png", "AppIcon76x76~ipad.png", "Icon@2x.png", "Icon.png", "ico.png"]
+
+
+    if (isfile_casesensitive("iTunesArtwork")):
+        iconfile = "iTunesArtwork"
+    else:
+        for i in range(len(peckingorder)):
+            if (isfile_casesensitive(f"Payload/{os.listdir('Payload')[0]}/{peckingorder[i]}")):
+                iconfile = peckingorder[i]
+                break
+            elif (i == len(peckingorder) - 1):
+                print("Icon file not found in Payload folder, trying Info.plist...")
+                with open(f"Payload/{infoplist}", "r") as f:
+                    try:
+                        contents = f.read()
+                        soup = BeautifulSoup(contents, 'xml')
+                        iconfile = soup.find("key", string="CFBundleIconFile").find_next("string").text
+                    except:
+                        try:
+                            contents = f.read()
+                            soup = BeautifulSoup(contents, 'xml')
+                            iconfile = soup.find("key", string="CFBundleIconFiles").find_next("array").find_next("string").text
+                        except:
+                            contents = readPlist(f"Payload/{infoplist}")
+                            try:
+                                iconfile = contents["CFBundleIconFile"]
+                            except:
+                                iconfile = contents["CFBundleIconFiles"][0]
+    if (iconfile == ""):
+        raise Exception("Icon file not found")
+
+    # if name contains more than 2 periods (as happens when it's a bundle ID), replace name with appname
     if (name.count(".") > 2):
         print("Looks like we failed to parse the name from the filename. Using the app display name in the Bundle ID instead")
         name = appname + " " + version + " Decrypted"
 
-    # find icon file in full inside Payload/*/, since iconfile is only beginning of file name
-    iconfile = [f for f in os.listdir(f"Payload/{os.listdir('Payload')[0]}") if iconfile in f][0]
 
-    # copy icon file to current directory
-    if (os.path.exists(f'Payload/{os.listdir("Payload")[0]}/{iconfile}')):
-        os.system(f'cp "Payload/{os.listdir("Payload")[0]}/{iconfile}" . > /dev/null')
+
+    if (iconfile == "iTunesArtwork"):
+        iconfile = [f for f in os.listdir() if iconfile in f][0]
     else:
-        os.system(f'cp "Payload/{os.listdir("Payload")[0]}/{iconfile}*" . > /dev/null')
+        iconfile = [f for f in os.listdir(f"Payload/{os.listdir('Payload')[0]}") if iconfile in f][0]
+        # copy icon file to current directory
+        if (os.path.exists(f'Payload/{os.listdir("Payload")[0]}/{iconfile}')):
+            os.system(f'cp "Payload/{os.listdir("Payload")[0]}/{iconfile}" . > /dev/null')
+        else:
+            os.system(f'cp "Payload/{os.listdir("Payload")[0]}/{iconfile}*" . > /dev/null')
 
 
     if (testmode):
         input("Test mode, holding Payload folder open. Enter to continue...")
     os.system(f'rm -rf Payload')
 
+
+
     
-    # Archive.org cannot read the icon pngs, so a specific thumbnail is needed
+    # Archive.org cannot read the icon pngs, so a specific thumbnail is needed. The thumbnails are usually in some weird format.
+    # They, in my experinece, must be converted on a mac. Linux people, this might give you a hard time.
     os.system(f'sips -s format jpeg "{iconfile}" --out _itemimage.jpg > /dev/null')
 
-    # file will get sorted properly automatically by archive.org later, this is where all software goes
+    # file will get sorted properly automatically by archive.org later, this is where all software goes, even though this software is not open source.
     collection = 'open_source_software'
 
     if (testmode):
@@ -145,8 +200,8 @@ for file in filelist:
             print("Cancelled.")
             exit()
 
-    # add "iconfile" to array below to upload icon uncompressed, though Archive.org cannot read it.
-    r = upload(identifier, files=[newfile, "_itemimage.jpg"], metadata=md, verbose=True)
+    # OPTIONAL: add "iconfile" to array below to upload icon uncompressed, though Archive.org cannot read it.
+    r = ia.upload(identifier, files=[newfile, "_itemimage.jpg"], metadata=md, verbose=True)
 
     if (r[0].status_code == 200):
         print ("\033[A\033[A") # reset cursor to beginning of previous line, so success message overwrites previous line

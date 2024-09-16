@@ -1,11 +1,11 @@
 # IPAUploader
  
-A python script for uploading iOS iPA files to Archive.org.
+A python script for uploading iOS iPA files to Archive.org. For my own use primarily, though I have prettified it. I will not provide support for this (probably).
 
 ## Installation
 
 1. Have python installed. Tested with 3.11, but it should work on other versions too.
-2. Have a macOS device. If you're on linux, you're on your own.
+2. **Have a macOS device**. If you're on Linux, you're on your own. Windows is not supported.
 3. Install the `ia` tool with `brew install internetarchive`.
 4. Run `ia configure` and follow the instructions.
 5. Run `python3.11 -m pip install -r requirements.txt`.
